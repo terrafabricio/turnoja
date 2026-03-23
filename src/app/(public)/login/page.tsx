@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -9,10 +10,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { loginSchema, type LoginInput } from '@/lib/validations/auth'
+import { signIn, getCurrentProfile } from '@/services/auth.service'
 
 export default function LoginPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
 
   const {
     register,
@@ -24,10 +29,26 @@ export default function LoginPage() {
 
   async function onSubmit(data: LoginInput) {
     setIsLoading(true)
+    setErrorMsg('')
     try {
-      // TODO: wire up Supabase auth
-      console.log('Login data:', data)
-      await new Promise((r) => setTimeout(r, 1000))
+      await signIn(data.email, data.password)
+      const profile = await getCurrentProfile()
+      const role = profile?.role
+      const redirect = searchParams.get('redirect')
+      if (redirect) {
+        router.push(redirect)
+      } else if (role === 'empresa') {
+        router.push('/empresa/dashboard')
+      } else if (role === 'trabalhador') {
+        router.push('/trabalhador/dashboard')
+      } else if (role === 'admin') {
+        router.push('/admin/dashboard')
+      } else {
+        router.push('/')
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao fazer login'
+      setErrorMsg(message === 'Invalid login credentials' ? 'E-mail ou senha incorretos.' : message)
     } finally {
       setIsLoading(false)
     }
@@ -56,6 +77,11 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
+            {errorMsg && (
+              <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">
+                {errorMsg}
+              </div>
+            )}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <Input
                 id="email"

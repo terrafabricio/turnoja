@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -15,11 +16,14 @@ import {
   CardDescription,
 } from '@/components/ui/card'
 import { registerCompanySchema, type RegisterCompanyInput } from '@/lib/validations/auth'
+import { signUp } from '@/services/auth.service'
 
 export default function CadastroEmpresaPage() {
+  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
 
   const {
     register,
@@ -31,10 +35,17 @@ export default function CadastroEmpresaPage() {
 
   async function onSubmit(data: RegisterCompanyInput) {
     setIsLoading(true)
+    setErrorMsg('')
     try {
-      // TODO: wire up Supabase auth
-      console.log('Register company data:', data)
-      await new Promise((r) => setTimeout(r, 1000))
+      await signUp(data.email, data.password, 'empresa', {
+        full_name: data.companyName,
+        cnpj: data.cnpj,
+        phone: data.phone,
+      })
+      router.push('/empresa/dashboard')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao criar conta'
+      setErrorMsg(message)
     } finally {
       setIsLoading(false)
     }
