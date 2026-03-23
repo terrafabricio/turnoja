@@ -38,7 +38,8 @@ export default function CadastroEmpresaPage() {
     setErrorMsg('')
     try {
       await signUp(data.email, data.password, 'empresa', {
-        full_name: data.companyName,
+        full_name: data.full_name,
+        company_name: data.company_name,
         cnpj: data.cnpj,
         phone: data.phone,
       })

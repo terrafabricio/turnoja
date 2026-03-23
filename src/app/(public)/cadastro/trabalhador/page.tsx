@@ -38,7 +38,7 @@ export default function CadastroTrabalhadorPage() {
     setErrorMsg('')
     try {
       await signUp(data.email, data.password, 'trabalhador', {
-        full_name: data.fullName,
+        full_name: data.full_name,
         cpf: data.cpf,
         phone: data.phone,
       })
